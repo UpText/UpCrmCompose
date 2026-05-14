@@ -47,8 +47,20 @@ publish_dacpac() {
     "/v:DeploymentTarget=${DEPLOYMENT_TARGET:-docker-compose}"
 }
 
+seed_admin_users() {
+  echo "Seeding tenant admin users..."
+
+  sqlcmd -C \
+    -S "${SQL_SERVER},${SQL_PORT}" \
+    -U "${SQL_ADMIN_USER}" \
+    -P "${SQL_ADMIN_PASSWORD}" \
+    -d "${SQL_DATABASE}" \
+    -i /app/seed-admin-users.sql
+}
+
 wait_for_sql
 create_database_if_missing
 publish_dacpac
+seed_admin_users
 
 echo "Database initialization completed."

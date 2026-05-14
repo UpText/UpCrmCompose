@@ -19,6 +19,7 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY init-image/init-db.sh /usr/local/bin/init-db.sh
+COPY init-image/seed-admin-users.sql /app/seed-admin-users.sql
 COPY DbProjAtomicCrm.dacpac /app/DbProjAtomicCrm.dacpac
 
 RUN chmod +x /usr/local/bin/init-db.sh \
