@@ -1,0 +1,73 @@
+services:
+  sqlserver:
+    image: ${SQL_SERVER_IMAGE:-mcr.microsoft.com/mssql/server:2022-latest}
+    platform: ${RUNTIME_PLATFORM:-linux/amd64}
+    container_name: upcrm-sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: ${MSSQL_PID:-Developer}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}
+    ports:
+      - "${SQL_PORT:-1433}:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  db-init:
+    build:
+      context: ./db
+      dockerfile: init-image/Dockerfile
+    platform: ${RUNTIME_PLATFORM:-linux/amd64}
+    container_name: upcrm-db-init
+    restart: "no"
+    depends_on:
+      - sqlserver
+    environment:
+      SQL_SERVER: sqlserver
+      SQL_PORT: 1433
+      SQL_ADMIN_USER: sa
+      SQL_ADMIN_PASSWORD: ${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}
+      SQL_DATABASE: ${MSSQL_DB:-UpCrm}
+      DEPLOY_VERSION: ${DEPLOY_VERSION:-local-compose}
+      GIT_COMMIT: ${GIT_COMMIT:-manual}
+      DEPLOYED_BY: ${DEPLOYED_BY:-docker-compose}
+      DEPLOYMENT_TARGET: ${DEPLOYMENT_TARGET:-docker-compose}
+
+  upapi:
+    image: ${UPAPI_IMAGE:-docker.io/uptext/upapi:latest}
+    platform: ${RUNTIME_PLATFORM:-linux/amd64}
+    container_name: upcrm-upapi
+    restart: unless-stopped
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    ports:
+      - "${UPAPI_PORT:-5092}:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      JWT_ISSUER: ${JWT_ISSUER:-UpApi}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-UpCrm}
+      JWT_HOURS: ${JWT_HOURS:-8}
+      SQLWEBAPI__SWAGGER: ${UPCRM_SERVICE:-crmapi}
+      Cors__AllowedOrigins__0: ${UPCRM_PUBLIC_URL:-http://localhost:${UPCRM_PORT:-8082}}
+      Services__crmapi__SqlSchema: ${UPAPI_SQL_SCHEMA:-crmapi}
+      Services__crmapi__SqlConnectionString: Server=sqlserver,1433;Initial Catalog=${MSSQL_DB:-UpCrm};User ID=sa;Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env};Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;
+
+  upcrm:
+    image: ${UPCRM_IMAGE:-docker.io/uptext/upcrm:latest}
+    platform: ${RUNTIME_PLATFORM:-linux/amd64}
+    container_name: upcrm-ui
+    restart: unless-stopped
+    depends_on:
+      upapi:
+        condition: service_started
+    ports:
+      - "${UPCRM_PORT:-8082}:80"
+    environment:
+      VITE_SQLWEBAPI_URL: ${UPAPI_PUBLIC_URL:-http://localhost:${UPAPI_PORT:-5092}}
+      VITE_SQLWEBAPI_SERVICE: ${UPCRM_SERVICE:-crmapi}
+
+volumes:
+  sqlserver-data:

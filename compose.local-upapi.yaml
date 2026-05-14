@@ -1,0 +1,6 @@
+services:
+  upapi:
+    image: local/upapi:dev
+    build:
+      context: /Users/ole/UpText/Repos/UpApi/src
+      dockerfile: UpApi/Dockerfile
