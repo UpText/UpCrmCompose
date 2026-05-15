@@ -1,0 +1,12 @@
+services:
+  db-init:
+    depends_on: {}
+    environment:
+      SQL_SERVER: ${EXTERNAL_SQL_SERVER:?Set EXTERNAL_SQL_SERVER in .env}
+      SQL_PORT: ${EXTERNAL_SQL_PORT:-1433}
+      SQL_ADMIN_USER: ${EXTERNAL_SQL_ADMIN_USER:-sa}
+      SQL_ADMIN_PASSWORD: ${EXTERNAL_SQL_ADMIN_PASSWORD:?Set EXTERNAL_SQL_ADMIN_PASSWORD in .env}
+
+  upapi:
+    environment:
+      Services__crmapi__SqlConnectionString: Server=${EXTERNAL_SQL_SERVER:?Set EXTERNAL_SQL_SERVER in .env},${EXTERNAL_SQL_PORT:-1433};Initial Catalog=${MSSQL_DB:-UpCrm};User ID=${UPAPI_SQL_USER:-upservice};Password=${UPAPI_SQL_PASSWORD:?Set UPAPI_SQL_PASSWORD in .env};Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;

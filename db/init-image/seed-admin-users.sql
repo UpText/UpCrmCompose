@@ -1,5 +1,71 @@
 SET NOCOUNT ON;
 
+DECLARE @Tenants TABLE
+(
+    name NVARCHAR(255) NOT NULL,
+    display_name NVARCHAR(255) NOT NULL,
+    active BIT NOT NULL,
+    activated_at DATETIME2 NOT NULL,
+    deactivated_at DATETIME2 NULL,
+    created_at DATETIME2 NOT NULL
+);
+
+INSERT INTO @Tenants
+(
+    name,
+    display_name,
+    active,
+    activated_at,
+    deactivated_at,
+    created_at
+)
+VALUES
+(
+    N'default',
+    N'Default CRM',
+    1,
+    SYSUTCDATETIME(),
+    NULL,
+    SYSUTCDATETIME()
+),
+(
+    N'admin',
+    N'Admin CRM',
+    1,
+    SYSUTCDATETIME(),
+    NULL,
+    SYSUTCDATETIME()
+);
+
+MERGE crm.tenants AS target
+USING @Tenants AS source
+    ON target.name = source.name
+WHEN MATCHED THEN
+    UPDATE SET
+        display_name = source.display_name,
+        active = source.active,
+        activated_at = source.activated_at,
+        deactivated_at = source.deactivated_at
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT
+    (
+        name,
+        display_name,
+        active,
+        activated_at,
+        deactivated_at,
+        created_at
+    )
+    VALUES
+    (
+        source.name,
+        source.display_name,
+        source.active,
+        source.activated_at,
+        source.deactivated_at,
+        source.created_at
+    );
+
 DECLARE @Users TABLE
 (
     tenant NVARCHAR(255) NOT NULL,
