@@ -22,6 +22,7 @@ COPY init-image/init-db.sh /usr/local/bin/init-db.sh
 COPY init-image/seed-service-login.sql /app/seed-service-login.sql
 COPY init-image/seed-admin-users.sql /app/seed-admin-users.sql
 COPY init-image/seed-demo-tenant.sql /app/seed-demo-tenant.sql
+COPY init-image/seed-demo-objects.sql /app/seed-demo-objects.sql
 COPY init-image/seed-demo-notes.sql /app/seed-demo-notes.sql
 COPY init-image/seed-tenant-settings.sql /app/seed-tenant-settings.sql
 COPY DbProjAtomicCrm.dacpac /app/DbProjAtomicCrm.dacpac

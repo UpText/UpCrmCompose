@@ -1,4 +1,29 @@
+SET QUOTED_IDENTIFIER ON;
 SET NOCOUNT ON;
+
+DECLARE @AdminTenantPassword NVARCHAR(4000) = N'$(ADMIN_TENANT_PASSWORD_ESCAPED)';
+DECLARE @AdminTenantPasswordHash NVARCHAR(100);
+
+IF @AdminTenantPassword IS NULL OR LTRIM(RTRIM(@AdminTenantPassword)) = N''
+BEGIN
+    THROW 50000, 'ADMIN_TENANT_PASSWORD is required.', 1;
+END;
+
+SELECT @AdminTenantPasswordHash = CAST(N'' AS XML).value(
+    'xs:base64Binary(xs:hexBinary(sql:column("hash_bytes_hex")))',
+    'NVARCHAR(100)'
+)
+FROM
+(
+    SELECT CONVERT(
+        VARCHAR(64),
+        HASHBYTES(
+            'SHA2_256',
+            CONVERT(VARCHAR(MAX), @AdminTenantPassword) COLLATE Latin1_General_100_BIN2_UTF8
+        ),
+        2
+    ) AS hash_bytes_hex
+) AS password_hash_source;
 
 DECLARE @Tenants TABLE
 (
@@ -108,7 +133,7 @@ VALUES
     N'User',
     1,
     0,
-    N'ZRkJ0398w5R0MYBx0/XgGSopK28yXLdPu6y/H74jq+Y='
+    @AdminTenantPasswordHash
 );
 
 MERGE crm.sales AS target

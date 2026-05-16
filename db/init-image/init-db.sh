@@ -7,13 +7,14 @@ set -euo pipefail
 : "${SQL_ADMIN_USER:=sa}"
 : "${SQL_ADMIN_PASSWORD:?SQL_ADMIN_PASSWORD is required}"
 : "${SQL_DATABASE:?SQL_DATABASE is required}"
+: "${ADMIN_TENANT_PASSWORD:?ADMIN_TENANT_PASSWORD is required}"
 : "${SERVICE_SQL_USER:=upservice}"
 : "${SERVICE_SQL_PASSWORD:?SERVICE_SQL_PASSWORD is required}"
 
 wait_for_sql() {
   echo "Waiting for SQL Server at ${SQL_SERVER}:${SQL_PORT}..."
 
-  until sqlcmd -C \
+  until sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
@@ -25,7 +26,7 @@ wait_for_sql() {
 create_database_if_missing() {
   echo "Ensuring database [${SQL_DATABASE}] exists..."
 
-  sqlcmd -C \
+  sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
@@ -52,7 +53,7 @@ publish_dacpac() {
 seed_service_login() {
   echo "Ensuring SQL service login [${SERVICE_SQL_USER}] exists with EXECUTE on [crmapi]..."
 
-  sqlcmd -C \
+  sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
@@ -62,20 +63,24 @@ seed_service_login() {
 }
 
 seed_admin_users() {
+  local admin_tenant_password_escaped
+  admin_tenant_password_escaped="${ADMIN_TENANT_PASSWORD//\'/\'\'}"
+
   echo "Seeding tenant admin users..."
 
-  sqlcmd -C \
+  sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
     -d "${SQL_DATABASE}" \
+    -v ADMIN_TENANT_PASSWORD_ESCAPED="${admin_tenant_password_escaped}" \
     -i /app/seed-admin-users.sql
 }
 
 seed_tenant_settings() {
   echo "Seeding tenant settings..."
 
-  sqlcmd -C \
+  sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
@@ -86,7 +91,7 @@ seed_tenant_settings() {
 seed_demo_tenant() {
   echo "Seeding demo tenant data..."
 
-  sqlcmd -C \
+  sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
@@ -94,10 +99,21 @@ seed_demo_tenant() {
     -i /app/seed-demo-tenant.sql
 }
 
+seed_demo_objects() {
+  echo "Seeding demo tenant objects..."
+
+  sqlcmd -b -C \
+    -S "${SQL_SERVER},${SQL_PORT}" \
+    -U "${SQL_ADMIN_USER}" \
+    -P "${SQL_ADMIN_PASSWORD}" \
+    -d "${SQL_DATABASE}" \
+    -i /app/seed-demo-objects.sql
+}
+
 seed_demo_notes() {
   echo "Seeding demo notes..."
 
-  sqlcmd -C \
+  sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
@@ -112,6 +128,7 @@ seed_service_login
 seed_admin_users
 seed_demo_tenant
 seed_tenant_settings
+seed_demo_objects
 seed_demo_notes
 
 echo "Database initialization completed."

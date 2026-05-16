@@ -23,7 +23,7 @@ The `db-init` helper image is built locally. The app containers are pulled from 
 ## Quick start
 
 1. Copy `.env.example` to `.env`
-2. Change at least `MSSQL_SA_PASSWORD`, `UPAPI_SQL_PASSWORD`, and `JWT_SECRET`
+2. Change at least `MSSQL_SA_PASSWORD`, `ADMIN_TENANT_PASSWORD`, `UPAPI_SQL_PASSWORD`, and `JWT_SECRET`
 3. Start the stack:
 
 ```bash
@@ -40,7 +40,7 @@ docker compose up --build -d
 Seeded tenant users:
 
 - `default`: `admin@default.local` / `default123+`
-- `admin`: `admin@admin.local` / `admin123+`
+- `admin`: `admin@admin.local` / value of `ADMIN_TENANT_PASSWORD`
 - `demo`: `demo@local.com` / `demo123+`
 
 The `demo` tenant is also seeded with sample companies, contacts, and sales records.
