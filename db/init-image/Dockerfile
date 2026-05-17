@@ -27,7 +27,8 @@ COPY init-image/seed-demo-notes.sql /app/seed-demo-notes.sql
 COPY init-image/seed-tenant-settings.sql /app/seed-tenant-settings.sql
 COPY DbProjAtomicCrm.dacpac /app/DbProjAtomicCrm.dacpac
 
-RUN chmod +x /usr/local/bin/init-db.sh \
+RUN sed -i 's/\r$//' /usr/local/bin/init-db.sh \
+    && chmod +x /usr/local/bin/init-db.sh \
     && rm /tmp/sqlpackage.zip
 
 ENTRYPOINT ["/usr/local/bin/init-db.sh"]
