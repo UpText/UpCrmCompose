@@ -15,7 +15,7 @@ services:
       - /bin/bash
       - -c
     command:
-      - read -r MSSQL_SA_PASSWORD < /run/secrets/mssql_sa_password && export MSSQL_SA_PASSWORD && exec /opt/mssql/bin/sqlservr
+      - if [ ! -s /run/secrets/mssql_sa_password ]; then echo "mssql_sa_password secret is missing or empty; set MSSQL_SA_PASSWORD in .env"; exit 1; fi; MSSQL_SA_PASSWORD="$$(tr -d '\r\n' < /run/secrets/mssql_sa_password)"; if [ -z "$$MSSQL_SA_PASSWORD" ]; then echo "MSSQL_SA_PASSWORD is empty after trimming line endings"; exit 1; fi; export MSSQL_SA_PASSWORD; exec /opt/mssql/bin/sqlservr
     healthcheck:
       test:
         - CMD-SHELL
