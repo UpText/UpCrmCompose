@@ -53,13 +53,13 @@ If you change `UPAPI_PORT` or `UPCRM_PORT`, the default browser-facing URLs now 
 
 ## Secrets
 
-Local secret values are still set in `.env`, but Compose now exposes them to containers as Docker secrets instead of passing them directly as application environment values.
+Local secret values are set in `.env`. Compose exposes them to containers as Docker secrets instead of passing them directly as application environment values, so no separate `secrets/` directory is required.
 
 - `sqlserver` reads `mssql_sa_password` from `/run/secrets/mssql_sa_password` before starting SQL Server.
 - `db-init` reads `SQL_ADMIN_PASSWORD_FILE`, `ADMIN_TENANT_PASSWORD_FILE`, and `SERVICE_SQL_PASSWORD_FILE`.
 - `upapi` reads `jwt_secret` from `/run/secrets/jwt_secret` before starting, and uses its secret resolver with `{{secret:upapi_sql_password}}` for SQL connection strings.
 
-The top-level Compose secrets are sourced from these `.env` variables:
+The top-level Compose secrets are sourced directly from these `.env` variables:
 
 ```env
 MSSQL_SA_PASSWORD=...
