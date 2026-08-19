@@ -35,6 +35,7 @@ docker compose up --build -d
 - UpCRM: [http://localhost:8082](http://localhost:8082)
 - UpApi home: [http://localhost:5092](http://localhost:5092)
 - UpApi docs: [http://localhost:5092/docs](http://localhost:5092/docs)
+- UpApi SQL log UI: [http://localhost:5092/sql-log-view](http://localhost:5092/sql-log-view)
 - SQL Server: `localhost,1433`
 
 Seeded tenant users:
@@ -46,8 +47,45 @@ Seeded tenant users:
 The `demo` tenant is also seeded with sample companies, contacts, and sales records.
 All three seeded tenants also get baseline configuration and an `attachments` bucket.
 The `demo` tenant also gets an initial contact note so it opens on the dashboard instead of the onboarding stepper after login.
+The stack also enables UpApi's SQL log feature. By default, `db-init` creates `dbo.log`, grants the `upservice` login `SELECT`, `INSERT`, and `DELETE` on that table, and UpApi writes log entries there.
 
 If you change `UPAPI_PORT` or `UPCRM_PORT`, the default browser-facing URLs now follow those ports automatically. You only need to set `UPAPI_PUBLIC_URL` or `UPCRM_PUBLIC_URL` yourself if you want a different hostname than `localhost`.
+
+## Secrets
+
+Local secret values are still set in `.env`, but Compose now exposes them to containers as Docker secrets instead of passing them directly as application environment values.
+
+- `sqlserver` reads `mssql_sa_password` from `/run/secrets/mssql_sa_password` before starting SQL Server.
+- `db-init` reads `SQL_ADMIN_PASSWORD_FILE`, `ADMIN_TENANT_PASSWORD_FILE`, and `SERVICE_SQL_PASSWORD_FILE`.
+- `upapi` reads `jwt_secret` from `/run/secrets/jwt_secret` before starting, and uses its secret resolver with `{{secret:upapi_sql_password}}` for SQL connection strings.
+
+The top-level Compose secrets are sourced from these `.env` variables:
+
+```env
+MSSQL_SA_PASSWORD=...
+ADMIN_TENANT_PASSWORD=...
+UPAPI_SQL_PASSWORD=...
+JWT_SECRET=...
+EXTERNAL_SQL_ADMIN_PASSWORD=...
+```
+
+## UpApi SQL Log
+
+The compose stack enables SqlLog through these UpApi settings:
+
+```env
+UPAPI_SQLLOG_SCHEMA=dbo
+UPAPI_SQLLOG_TABLE=log
+UPAPI_SQLLOG_RETENTION_DAYS=30
+```
+
+By default, the SQL log connection uses the same SQL Server, database, service login, and Docker secret-backed service password as `crmapi`.
+
+Open the log UI at [http://localhost:5092/sql-log-view](http://localhost:5092/sql-log-view), or query the API directly:
+
+```bash
+curl "http://localhost:5092/SqlLog?service=crmapi&maxHours=24&FromRow=0&ToRow=100"
+```
 
 ## Local UpApi Source Override
 
@@ -95,8 +133,9 @@ docker compose -f compose.yaml -f compose.external-sql.yaml up --build -d db-ini
 This does three things:
 
 - `db-init` connects to the existing SQL Server and publishes the bundled `dacpac`
-- `db-init` creates or updates the dedicated `upservice` login and grants it only `EXECUTE` on the `crmapi` schema
+- `db-init` creates or updates the dedicated `upservice` login, grants it `EXECUTE` on the `crmapi` schema, and grants metadata visibility on the `crm` table schema for SQL generation
 - `upapi` uses that `upservice` login instead of `sa`
+- `db-init` creates and grants access to the configured SQL log table
 
 Platform notes:
 
@@ -116,7 +155,7 @@ Requirements for the existing SQL Server:
 - `UpCRM` is configured with `VITE_SQLWEBAPI_URL=http://localhost:5092`, not `http://upapi:8080`, because that setting runs in the browser.
 - The published runtime images are currently used as `linux/amd64`. On ARM hosts, Docker will run them through emulation.
 - SQL Server still listens on `1433` inside the Docker network. If `1433` is busy on the host, set `SQL_PORT=1434` in `.env`; `db-init` and `upapi` will still use the internal `sqlserver:1433` address.
-- `upapi` connects with the dedicated SQL login from `UPAPI_SQL_USER` / `UPAPI_SQL_PASSWORD`. The bootstrap creates that login and grants it only `EXECUTE` on the `crmapi` schema.
+- `upapi` connects with the dedicated SQL login from `UPAPI_SQL_USER` / `UPAPI_SQL_PASSWORD`. The bootstrap creates that login, grants it `EXECUTE` on the `crmapi` schema, and grants metadata visibility on the `crm` table schema for SQL generation.
 - SQL data is persisted in the named Docker volume `sqlserver-data`.
 - If `1433`, `5092`, or `8082` is already in use on the host, change `SQL_PORT`, `UPAPI_PORT`, or `UPCRM_PORT` in `.env`.
 - To rebuild the database from scratch, run:

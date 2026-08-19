@@ -56,6 +56,7 @@ IF IS_ROLEMEMBER(N''db_datawriter'', N''' + REPLACE(@service_user, '''', '''''')
 
 GRANT CONNECT TO ' + QUOTENAME(@service_user) + N';
 GRANT EXECUTE ON SCHEMA::[crmapi] TO ' + QUOTENAME(@service_user) + N';
+GRANT VIEW DEFINITION ON SCHEMA::[crm] TO ' + QUOTENAME(@service_user) + N';
 ';
 
 EXEC (@sql);

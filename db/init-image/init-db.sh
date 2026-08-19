@@ -2,6 +2,28 @@
 
 set -euo pipefail
 
+read_secret_file() {
+  local variable_name="$1"
+  local file_variable_name="${variable_name}_FILE"
+  local file_path="${!file_variable_name:-}"
+
+  if [[ -n "${!variable_name:-}" || -z "${file_path}" ]]; then
+    return
+  fi
+
+  if [[ ! -f "${file_path}" ]]; then
+    echo "${file_variable_name} points to missing file: ${file_path}" >&2
+    exit 1
+  fi
+
+  printf -v "${variable_name}" '%s' "$(tr -d '\r\n' < "${file_path}")"
+  export "${variable_name}"
+}
+
+read_secret_file SQL_ADMIN_PASSWORD
+read_secret_file ADMIN_TENANT_PASSWORD
+read_secret_file SERVICE_SQL_PASSWORD
+
 : "${SQL_SERVER:?SQL_SERVER is required}"
 : "${SQL_PORT:=1433}"
 : "${SQL_ADMIN_USER:=sa}"
@@ -10,6 +32,8 @@ set -euo pipefail
 : "${ADMIN_TENANT_PASSWORD:?ADMIN_TENANT_PASSWORD is required}"
 : "${SERVICE_SQL_USER:=upservice}"
 : "${SERVICE_SQL_PASSWORD:?SERVICE_SQL_PASSWORD is required}"
+: "${SQL_LOG_SCHEMA:=dbo}"
+: "${SQL_LOG_TABLE:=log}"
 
 wait_for_sql() {
   echo "Waiting for SQL Server at ${SQL_SERVER}:${SQL_PORT}..."
@@ -51,7 +75,7 @@ publish_dacpac() {
 }
 
 seed_service_login() {
-  echo "Ensuring SQL service login [${SERVICE_SQL_USER}] exists with EXECUTE on [crmapi]..."
+  echo "Ensuring SQL service login [${SERVICE_SQL_USER}] exists with EXECUTE on [crmapi] and metadata visibility on [crm]..."
 
   sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
@@ -60,6 +84,18 @@ seed_service_login() {
     -d master \
     -v SERVICE_SQL_USER="${SERVICE_SQL_USER}" SERVICE_SQL_PASSWORD="${SERVICE_SQL_PASSWORD}" SQL_DATABASE="${SQL_DATABASE}" \
     -i /app/seed-service-login.sql
+}
+
+seed_sql_log() {
+  echo "Ensuring SQL log table [${SQL_LOG_SCHEMA}].[${SQL_LOG_TABLE}] exists..."
+
+  sqlcmd -b -C \
+    -S "${SQL_SERVER},${SQL_PORT}" \
+    -U "${SQL_ADMIN_USER}" \
+    -P "${SQL_ADMIN_PASSWORD}" \
+    -d "${SQL_DATABASE}" \
+    -v SERVICE_SQL_USER="${SERVICE_SQL_USER}" SQL_LOG_SCHEMA="${SQL_LOG_SCHEMA}" SQL_LOG_TABLE="${SQL_LOG_TABLE}" \
+    -i /app/seed-sql-log.sql
 }
 
 seed_admin_users() {
@@ -125,6 +161,7 @@ wait_for_sql
 create_database_if_missing
 publish_dacpac
 seed_service_login
+seed_sql_log
 seed_admin_users
 seed_demo_tenant
 seed_tenant_settings

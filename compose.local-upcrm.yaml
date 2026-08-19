@@ -1,0 +1,6 @@
+services:
+  upcrm:
+    image: local/upcrm:dev
+    build:
+      context: /Users/ole/UpText/Repos/atomic-crm
+      dockerfile: Dockerfile.sqlwebapi
