@@ -16,6 +16,14 @@ services:
       - -c
     command:
       - read -r MSSQL_SA_PASSWORD < /run/secrets/mssql_sa_password && export MSSQL_SA_PASSWORD && exec /opt/mssql/bin/sqlservr
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -b -C -l 5 -S localhost -U sa -P "$$(cat /run/secrets/mssql_sa_password)" -Q "SELECT 1" >/dev/null
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
     ports:
       - "${SQL_PORT:-1433}:1433"
     volumes:
@@ -29,7 +37,8 @@ services:
     container_name: upcrm-db-init
     restart: "no"
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     environment:
       SQL_SERVER: sqlserver
       SQL_PORT: 1433
