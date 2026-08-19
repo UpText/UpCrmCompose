@@ -36,15 +36,41 @@ read_secret_file SERVICE_SQL_PASSWORD
 : "${SQL_LOG_TABLE:=log}"
 
 wait_for_sql() {
+  local timeout_seconds="${SQL_WAIT_TIMEOUT_SECONDS:-300}"
+  local start_time="${SECONDS}"
+  local last_status=0
+  local last_error_file
+  local next_status_at=10
+
+  last_error_file="$(mktemp)"
+
   echo "Waiting for SQL Server at ${SQL_SERVER}:${SQL_PORT}..."
 
-  until sqlcmd -b -C \
+  until sqlcmd -b -C -l 5 \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
-    -Q "SELECT 1" >/dev/null 2>&1; do
+    -Q "SELECT 1" >/dev/null 2>"${last_error_file}"; do
+    last_status=$?
+
+    if (( SECONDS - start_time >= timeout_seconds )); then
+      echo "Timed out after ${timeout_seconds}s waiting for SQL Server at ${SQL_SERVER}:${SQL_PORT}." >&2
+      echo "Last sqlcmd error:" >&2
+      sed 's/^/  /' "${last_error_file}" >&2
+      rm -f "${last_error_file}"
+      exit "${last_status}"
+    fi
+
+    if (( SECONDS - start_time >= next_status_at )); then
+      echo "Still waiting for SQL Server at ${SQL_SERVER}:${SQL_PORT} (${SECONDS - start_time}s elapsed)..."
+      next_status_at=$((next_status_at + 30))
+    fi
+
     sleep 2
   done
+
+  rm -f "${last_error_file}"
+  echo "SQL Server is accepting connections."
 }
 
 create_database_if_missing() {

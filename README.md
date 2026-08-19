@@ -155,6 +155,7 @@ Requirements for the existing SQL Server:
 - `UpCRM` is configured with `VITE_SQLWEBAPI_URL=http://localhost:5092`, not `http://upapi:8080`, because that setting runs in the browser.
 - The published runtime images are currently used as `linux/amd64`. On ARM hosts, Docker will run them through emulation.
 - SQL Server still listens on `1433` inside the Docker network. If `1433` is busy on the host, set `SQL_PORT=1434` in `.env`; `db-init` and `upapi` will still use the internal `sqlserver:1433` address.
+- If `db-init` waits for SQL Server and then reports login failure for user `sa`, the existing `sqlserver-data` volume was probably created with a different `MSSQL_SA_PASSWORD`. Either restore the old password in `.env`, or rebuild the local database from scratch with `docker compose down -v` followed by `docker compose up --build -d`.
 - `upapi` connects with the dedicated SQL login from `UPAPI_SQL_USER` / `UPAPI_SQL_PASSWORD`. The bootstrap creates that login, grants it `EXECUTE` on the `crmapi` schema, and grants metadata visibility on the `crm` table schema for SQL generation.
 - SQL data is persisted in the named Docker volume `sqlserver-data`.
 - If `1433`, `5092`, or `8082` is already in use on the host, change `SQL_PORT`, `UPAPI_PORT`, or `UPCRM_PORT` in `.env`.

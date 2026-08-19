@@ -36,6 +36,7 @@ services:
       SQL_ADMIN_USER: sa
       SQL_ADMIN_PASSWORD_FILE: /run/secrets/mssql_sa_password
       SQL_DATABASE: ${MSSQL_DB:-UpCrm}
+      SQL_WAIT_TIMEOUT_SECONDS: ${SQL_WAIT_TIMEOUT_SECONDS:-300}
       ADMIN_TENANT_PASSWORD_FILE: /run/secrets/admin_tenant_password
       SERVICE_SQL_USER: ${UPAPI_SQL_USER:-upservice}
       SERVICE_SQL_PASSWORD_FILE: /run/secrets/upapi_sql_password
