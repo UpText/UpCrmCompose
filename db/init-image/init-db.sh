@@ -41,6 +41,7 @@ wait_for_sql() {
   local last_status=0
   local last_error_file
   local next_status_at=10
+  local elapsed_seconds=0
 
   last_error_file="$(mktemp)"
 
@@ -53,7 +54,9 @@ wait_for_sql() {
     -Q "SELECT 1" >/dev/null 2>"${last_error_file}"; do
     last_status=$?
 
-    if (( SECONDS - start_time >= timeout_seconds )); then
+    elapsed_seconds=$((SECONDS - start_time))
+
+    if (( elapsed_seconds >= timeout_seconds )); then
       echo "Timed out after ${timeout_seconds}s waiting for SQL Server at ${SQL_SERVER}:${SQL_PORT}." >&2
       echo "Last sqlcmd error:" >&2
       sed 's/^/  /' "${last_error_file}" >&2
@@ -61,8 +64,8 @@ wait_for_sql() {
       exit "${last_status}"
     fi
 
-    if (( SECONDS - start_time >= next_status_at )); then
-      echo "Still waiting for SQL Server at ${SQL_SERVER}:${SQL_PORT} (${SECONDS - start_time}s elapsed)..."
+    if (( elapsed_seconds >= next_status_at )); then
+      echo "Still waiting for SQL Server at ${SQL_SERVER}:${SQL_PORT}; ${elapsed_seconds}s elapsed."
       next_status_at=$((next_status_at + 30))
     fi
 
