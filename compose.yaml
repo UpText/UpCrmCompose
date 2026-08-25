@@ -90,6 +90,7 @@ services:
       SQLWEBAPI__SWAGGER: ${UPCRM_SERVICE:-crmapi}
       Cors__AllowedOrigins__0: ${UPCRM_PUBLIC_URL:-http://localhost:${UPCRM_PORT:-8082}}
       Cors__AllowedOrigins__1: http://localhost:5173
+      Cors__AllowedOrigins__2: http://localhost:5174
       Services__crmapi__SqlSchema: ${UPAPI_SQL_SCHEMA:-crmapi}
       Services__crmapi__TableSchema: ${UPAPI_TABLE_SCHEMA:-crm}
       Services__crmapi__SqlConnectionString: Server=sqlserver,1433;Initial Catalog=${MSSQL_DB:-UpCrm};User ID=${UPAPI_SQL_USER:-upservice};Password={{secret:upapi_sql_password}};Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;
