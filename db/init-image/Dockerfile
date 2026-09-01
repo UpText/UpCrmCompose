@@ -1,3 +1,16 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0-jammy AS password-hasher-build
+
+WORKDIR /src
+
+COPY init-image/PasswordHasher/UpCrm.PasswordHasher.csproj ./PasswordHasher/
+COPY init-image/PasswordHasher/Program.cs ./PasswordHasher/
+COPY init-image/PasswordHasher/NuGet.config ./PasswordHasher/
+
+RUN dotnet publish ./PasswordHasher/UpCrm.PasswordHasher.csproj \
+    --configuration Release \
+    --output /out \
+    --no-self-contained
+
 FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -21,12 +34,14 @@ WORKDIR /app
 COPY init-image/init-db.sh /usr/local/bin/init-db.sh
 COPY init-image/seed-service-login.sql /app/seed-service-login.sql
 COPY init-image/seed-sql-log.sql /app/seed-sql-log.sql
+COPY init-image/fix-tenants-post-password-hash.sql /app/fix-tenants-post-password-hash.sql
 COPY init-image/seed-admin-users.sql /app/seed-admin-users.sql
 COPY init-image/seed-demo-tenant.sql /app/seed-demo-tenant.sql
 COPY init-image/seed-demo-objects.sql /app/seed-demo-objects.sql
 COPY init-image/seed-demo-notes.sql /app/seed-demo-notes.sql
 COPY init-image/seed-tenant-settings.sql /app/seed-tenant-settings.sql
 COPY DbProjAtomicCrm.dacpac /app/DbProjAtomicCrm.dacpac
+COPY --from=password-hasher-build /out /app/password-hasher
 
 RUN sed -i 's/\r$//' /usr/local/bin/init-db.sh \
     && chmod +x /usr/local/bin/init-db.sh \

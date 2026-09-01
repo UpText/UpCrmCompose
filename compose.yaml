@@ -75,7 +75,7 @@ services:
       db-init:
         condition: service_completed_successfully
     ports:
-      - "${UPAPI_PORT:-5092}:8080"
+      - "${UPAPI_PORT:-8880}:8080"
     entrypoint:
       - /bin/sh
       - -c
@@ -88,9 +88,9 @@ services:
       JWT_AUDIENCE: ${JWT_AUDIENCE:-UpCrm}
       JWT_HOURS: ${JWT_HOURS:-8}
       SQLWEBAPI__SWAGGER: ${UPCRM_SERVICE:-crmapi}
-      Cors__AllowedOrigins__0: ${UPCRM_PUBLIC_URL:-http://localhost:${UPCRM_PORT:-8082}}
-      Cors__AllowedOrigins__1: http://localhost:5173
-      Cors__AllowedOrigins__2: http://localhost:5174
+      Cors__AllowedOrigins__0: ${UPAPI_CORS_ALLOWED_ORIGIN_0:-}
+      Cors__AllowedOrigins__1: ${UPAPI_CORS_ALLOWED_ORIGIN_1:-}
+      Cors__AllowedOrigins__2: ${UPAPI_CORS_ALLOWED_ORIGIN_2:-}
       Services__crmapi__SqlSchema: ${UPAPI_SQL_SCHEMA:-crmapi}
       Services__crmapi__TableSchema: ${UPAPI_TABLE_SCHEMA:-crm}
       Services__crmapi__SqlConnectionString: Server=sqlserver,1433;Initial Catalog=${MSSQL_DB:-UpCrm};User ID=${UPAPI_SQL_USER:-upservice};Password={{secret:upapi_sql_password}};Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;
@@ -115,9 +115,9 @@ services:
       upapi:
         condition: service_started
     ports:
-      - "${UPCRM_PORT:-8082}:80"
+      - "${UPCRM_PORT:-8080}:80"
     environment:
-      VITE_SQLWEBAPI_URL: ${UPAPI_PUBLIC_URL:-http://localhost:${UPAPI_PORT:-5092}}
+      VITE_SQLWEBAPI_URL: ${UPAPI_PUBLIC_URL:-http://localhost:${UPAPI_PORT:-8880}}
       VITE_SQLWEBAPI_SERVICE: ${UPCRM_SERVICE:-crmapi}
 
 volumes:

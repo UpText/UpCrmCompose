@@ -1,29 +1,22 @@
 SET QUOTED_IDENTIFIER ON;
 SET NOCOUNT ON;
 
-DECLARE @AdminTenantPassword NVARCHAR(4000) = N'$(ADMIN_TENANT_PASSWORD_ESCAPED)';
-DECLARE @AdminTenantPasswordHash NVARCHAR(100);
+DECLARE @AdminTenantPasswordHash NVARCHAR(100) = N'$(ADMIN_TENANT_PASSWORD_HASH)';
 
-IF @AdminTenantPassword IS NULL OR LTRIM(RTRIM(@AdminTenantPassword)) = N''
+IF @AdminTenantPasswordHash IS NULL OR LTRIM(RTRIM(@AdminTenantPasswordHash)) = N''
 BEGIN
-    THROW 50000, 'ADMIN_TENANT_PASSWORD is required.', 1;
+    THROW 50000, 'ADMIN_TENANT_PASSWORD_HASH is required.', 1;
 END;
 
-SELECT @AdminTenantPasswordHash = CAST(N'' AS XML).value(
-    'xs:base64Binary(xs:hexBinary(sql:column("hash_bytes_hex")))',
-    'NVARCHAR(100)'
-)
-FROM
-(
-    SELECT CONVERT(
-        VARCHAR(64),
-        HASHBYTES(
-            'SHA2_256',
-            CONVERT(VARCHAR(MAX), @AdminTenantPassword) COLLATE Latin1_General_100_BIN2_UTF8
-        ),
-        2
-    ) AS hash_bytes_hex
-) AS password_hash_source;
+IF LEN(@AdminTenantPasswordHash) = 43
+BEGIN
+    SET @AdminTenantPasswordHash = @AdminTenantPasswordHash + N'=';
+END;
+
+IF LEN(@AdminTenantPasswordHash) <> 44
+BEGIN
+    THROW 50000, 'ADMIN_TENANT_PASSWORD_HASH must be a SHA-256 base64 hash.', 1;
+END;
 
 DECLARE @Tenants TABLE
 (

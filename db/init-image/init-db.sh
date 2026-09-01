@@ -127,9 +127,22 @@ seed_sql_log() {
     -i /app/seed-sql-log.sql
 }
 
+fix_tenants_post_password_hash() {
+  echo "Ensuring tenant-created admin passwords use the login hash format..."
+
+  sqlcmd -b -C \
+    -S "${SQL_SERVER},${SQL_PORT}" \
+    -U "${SQL_ADMIN_USER}" \
+    -P "${SQL_ADMIN_PASSWORD}" \
+    -d "${SQL_DATABASE}" \
+    -i /app/fix-tenants-post-password-hash.sql
+}
+
 seed_admin_users() {
-  local admin_tenant_password_escaped
-  admin_tenant_password_escaped="${ADMIN_TENANT_PASSWORD//\'/\'\'}"
+  local admin_tenant_password_hash
+  local admin_tenant_password_hash_escaped
+  admin_tenant_password_hash="$(printf '%s' "${ADMIN_TENANT_PASSWORD}" | dotnet /app/password-hasher/UpCrm.PasswordHasher.dll)"
+  admin_tenant_password_hash_escaped="${admin_tenant_password_hash//\'/\'\'}"
 
   echo "Seeding tenant admin users..."
 
@@ -138,7 +151,7 @@ seed_admin_users() {
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
     -d "${SQL_DATABASE}" \
-    -v ADMIN_TENANT_PASSWORD_ESCAPED="${admin_tenant_password_escaped}" \
+    -v ADMIN_TENANT_PASSWORD_HASH="${admin_tenant_password_hash_escaped}" \
     -i /app/seed-admin-users.sql
 }
 
@@ -191,6 +204,7 @@ create_database_if_missing
 publish_dacpac
 seed_service_login
 seed_sql_log
+fix_tenants_post_password_hash
 seed_admin_users
 seed_demo_tenant
 seed_tenant_settings

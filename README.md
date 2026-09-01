@@ -32,10 +32,10 @@ docker compose up --build -d
 
 4. Open:
 
-- UpCRM: [http://localhost:8082](http://localhost:8082)
-- UpApi home: [http://localhost:5092](http://localhost:5092)
-- UpApi docs: [http://localhost:5092/docs](http://localhost:5092/docs)
-- UpApi SQL log UI: [http://localhost:5092/sql-log-view](http://localhost:5092/sql-log-view)
+- UpCRM: [http://localhost:8080](http://localhost:8080)
+- UpApi home: [http://localhost:8880](http://localhost:8880)
+- UpApi docs: [http://localhost:8880/docs](http://localhost:8880/docs)
+- UpApi SQL log UI: [http://localhost:8880/sql-log-view](http://localhost:8880/sql-log-view)
 - SQL Server: `localhost,1433`
 
 Seeded tenant users:
@@ -50,6 +50,24 @@ The `demo` tenant also gets an initial contact note so it opens on the dashboard
 The stack also enables UpApi's SQL log feature. By default, `db-init` creates `dbo.log`, grants the `upservice` login `SELECT`, `INSERT`, and `DELETE` on that table, and UpApi writes log entries there.
 
 If you change `UPAPI_PORT` or `UPCRM_PORT`, the default browser-facing URLs now follow those ports automatically. You only need to set `UPAPI_PUBLIC_URL` or `UPCRM_PUBLIC_URL` yourself if you want a different hostname than `localhost`.
+
+UpApi CORS origins are configured from `.env` with `UPAPI_CORS_ALLOWED_ORIGIN_0`, `UPAPI_CORS_ALLOWED_ORIGIN_1`, and `UPAPI_CORS_ALLOWED_ORIGIN_2`. For hosted installs, set origin 0 to the public UpCRM URL and leave unused origins blank.
+
+## Workstation Install
+
+For a workstation install, keep these values in `.env` so the user starts the app at [http://localhost:8080](http://localhost:8080):
+
+```env
+UPCRM_PORT=8080
+UPAPI_PORT=8880
+UPCRM_PUBLIC_URL=http://localhost:8080
+UPAPI_PUBLIC_URL=http://localhost:8880
+UPAPI_CORS_ALLOWED_ORIGIN_0=http://localhost:8080
+```
+
+## Caddy Reverse Proxy
+
+Caddy is intentionally not part of this Compose project. To run Caddy separately on the Ubuntu host and proxy public HTTPS traffic to UpCRM on `8080` and UpApi on `8880`, see [`docs/caddy-ubuntu-docker.md`](/Users/ole/UpText/Repos/UpCrmCompose/docs/caddy-ubuntu-docker.md).
 
 ## Secrets
 
@@ -81,10 +99,10 @@ UPAPI_SQLLOG_RETENTION_DAYS=30
 
 By default, the SQL log connection uses the same SQL Server, database, service login, and Docker secret-backed service password as `crmapi`.
 
-Open the log UI at [http://localhost:5092/sql-log-view](http://localhost:5092/sql-log-view), or query the API directly:
+Open the log UI at [http://localhost:8880/sql-log-view](http://localhost:8880/sql-log-view), or query the API directly:
 
 ```bash
-curl "http://localhost:5092/SqlLog?service=crmapi&maxHours=24&FromRow=0&ToRow=100"
+curl "http://localhost:8880/SqlLog?service=crmapi&maxHours=24&FromRow=0&ToRow=100"
 ```
 
 ## Local UpApi Source Override
@@ -118,10 +136,13 @@ MSSQL_DB=UpCrm
 UPAPI_SQL_USER=upservice
 UPAPI_SQL_PASSWORD=CrmExec_42!BlueStone
 JWT_SECRET=YourLongRandomJwtSecretHere
-UPAPI_PORT=8081
+UPAPI_PORT=8880
 UPCRM_PORT=8080
-UPAPI_PUBLIC_URL=http://localhost:8081
+UPAPI_PUBLIC_URL=http://localhost:8880
 UPCRM_PUBLIC_URL=http://localhost:8080
+UPAPI_CORS_ALLOWED_ORIGIN_0=http://localhost:8080
+UPAPI_CORS_ALLOWED_ORIGIN_1=
+UPAPI_CORS_ALLOWED_ORIGIN_2=
 ```
 
 3. Start only the app services with the external-SQL override:
@@ -152,13 +173,13 @@ Requirements for the existing SQL Server:
 
 ## Notes
 
-- `UpCRM` is configured with `VITE_SQLWEBAPI_URL=http://localhost:5092`, not `http://upapi:8080`, because that setting runs in the browser.
+- `UpCRM` is configured with `VITE_SQLWEBAPI_URL=http://localhost:8880`, not `http://upapi:8080`, because that setting runs in the browser.
 - The published runtime images are currently used as `linux/amd64`. On ARM hosts, Docker will run them through emulation.
 - SQL Server still listens on `1433` inside the Docker network. If `1433` is busy on the host, set `SQL_PORT=1434` in `.env`; `db-init` and `upapi` will still use the internal `sqlserver:1433` address.
 - If `db-init` waits for SQL Server and then reports login failure for user `sa`, the existing `sqlserver-data` volume was probably created with a different `MSSQL_SA_PASSWORD`. Either restore the old password in `.env`, or rebuild the local database from scratch with `docker compose down -v` followed by `docker compose up --build -d`.
 - `upapi` connects with the dedicated SQL login from `UPAPI_SQL_USER` / `UPAPI_SQL_PASSWORD`. The bootstrap creates that login, grants it `EXECUTE` on the `crmapi` schema, and grants metadata visibility on the `crm` table schema for SQL generation.
 - SQL data is persisted in the named Docker volume `sqlserver-data`.
-- If `1433`, `5092`, or `8082` is already in use on the host, change `SQL_PORT`, `UPAPI_PORT`, or `UPCRM_PORT` in `.env`.
+- If `1433`, `8880`, or `8080` is already in use on the host, change `SQL_PORT`, `UPAPI_PORT`, or `UPCRM_PORT` in `.env`.
 - To rebuild the database from scratch, run:
 
 ```bash

@@ -16,8 +16,7 @@ BEGIN
         contact_id,
         sales_id,
         date,
-        text,
-        status
+        text
     )
     VALUES
     (
@@ -25,7 +24,6 @@ BEGIN
         2,
         3,
         '2026-05-15T08:30:00',
-        N'Welcome to the demo workspace. This seeded note unlocks the dashboard on first login.',
-        N'warm'
+        N'Welcome to the demo workspace. This seeded note unlocks the dashboard on first login.'
     );
 END;
