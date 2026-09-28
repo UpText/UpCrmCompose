@@ -1,0 +1,6 @@
+services:
+  uptextapi:
+    image: local/uptextapi:dev
+    build:
+      context: ../UpTextApi/src
+      dockerfile: UpTextApi/Dockerfile

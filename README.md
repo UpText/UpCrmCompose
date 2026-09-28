@@ -4,8 +4,8 @@ This repo starts the full local stack with Docker Compose:
 
 - SQL Server
 - a one-shot database initializer that publishes the bundled CRM `dacpac`
-- `uptext/upapi`
-- `uptext/upcrm`
+- `uptext/uptextapi`
+- `uptext/uptextcrm`
 
 It is designed to work on a new Windows or Linux machine with Docker installed.
 Git is only needed if you want to clone the repository. Once you have the files locally, running the stack only requires Docker.
@@ -32,10 +32,10 @@ docker compose up --build -d
 
 4. Open:
 
-- UpCRM: [http://localhost:8080](http://localhost:8080)
-- UpApi home: [http://localhost:8880](http://localhost:8880)
-- UpApi docs: [http://localhost:8880/docs](http://localhost:8880/docs)
-- UpApi SQL log UI: [http://localhost:8880/sql-log-view](http://localhost:8880/sql-log-view)
+- UpTextCRM: [http://localhost:8080](http://localhost:8080)
+- UpTextApi home: [http://localhost:8880](http://localhost:8880)
+- UpTextApi docs: [http://localhost:8880/docs](http://localhost:8880/docs)
+- UpTextApi SQL log UI: [http://localhost:8880/sql-log-view](http://localhost:8880/sql-log-view)
 - SQL Server: `localhost,1433`
 
 Seeded tenant users:
@@ -47,11 +47,11 @@ Seeded tenant users:
 The `demo` tenant is also seeded with sample companies, contacts, and sales records.
 All three seeded tenants also get baseline configuration and an `attachments` bucket.
 The `demo` tenant also gets an initial contact note so it opens on the dashboard instead of the onboarding stepper after login.
-The stack also enables UpApi's SQL log feature. By default, `db-init` creates `dbo.log`, grants the `upservice` login `SELECT`, `INSERT`, and `DELETE` on that table, and UpApi writes log entries there.
+The stack also enables UpTextApi's SQL log feature. By default, `db-init` creates `dbo.log`, grants the `upservice` login `SELECT`, `INSERT`, and `DELETE` on that table, and UpTextApi writes log entries there.
 
 If you change `UPAPI_PORT` or `UPCRM_PORT`, the default browser-facing URLs now follow those ports automatically. You only need to set `UPAPI_PUBLIC_URL` or `UPCRM_PUBLIC_URL` yourself if you want a different hostname than `localhost`.
 
-UpApi CORS origins are configured from `.env` with `UPAPI_CORS_ALLOWED_ORIGIN_0`, `UPAPI_CORS_ALLOWED_ORIGIN_1`, and `UPAPI_CORS_ALLOWED_ORIGIN_2`. For hosted installs, set origin 0 to the public UpCRM URL and leave unused origins blank.
+UpTextApi CORS origins are configured from `.env` with `UPAPI_CORS_ALLOWED_ORIGIN_0`, `UPAPI_CORS_ALLOWED_ORIGIN_1`, and `UPAPI_CORS_ALLOWED_ORIGIN_2`. For hosted installs, set origin 0 to the public UpTextCRM URL and leave unused origins blank.
 
 ## Workstation Install
 
@@ -67,7 +67,7 @@ UPAPI_CORS_ALLOWED_ORIGIN_0=http://localhost:8080
 
 ## Caddy Reverse Proxy
 
-Caddy is intentionally not part of this Compose project. To run Caddy separately on the Ubuntu host and proxy public HTTPS traffic to UpCRM on `8080` and UpApi on `8880`, see [`docs/caddy-ubuntu-docker.md`](/Users/ole/UpText/Repos/UpCrmCompose/docs/caddy-ubuntu-docker.md).
+Caddy is intentionally not part of this Compose project. To run Caddy separately on the Ubuntu host and proxy public HTTPS traffic to UpTextCRM on `8080` and UpTextApi on `8880`, see [`docs/caddy-ubuntu-docker.md`](/Users/ole/UpText/Repos/UpCrmCompose/docs/caddy-ubuntu-docker.md).
 
 ## Secrets
 
@@ -75,7 +75,7 @@ Local secret values are set in `.env`. Compose exposes them to containers as Doc
 
 - `sqlserver` reads `mssql_sa_password` from `/run/secrets/mssql_sa_password` before starting SQL Server.
 - `db-init` reads `SQL_ADMIN_PASSWORD_FILE`, `ADMIN_TENANT_PASSWORD_FILE`, and `SERVICE_SQL_PASSWORD_FILE`.
-- `upapi` reads `jwt_secret` from `/run/secrets/jwt_secret` before starting, and uses its secret resolver with `{{secret:upapi_sql_password}}` for SQL connection strings.
+- `uptextapi` reads `jwt_secret` from `/run/secrets/jwt_secret` before starting, and uses its secret resolver with `{{secret:upapi_sql_password}}` for SQL connection strings.
 
 The top-level Compose secrets are sourced directly from these `.env` variables:
 
@@ -87,9 +87,9 @@ JWT_SECRET=...
 EXTERNAL_SQL_ADMIN_PASSWORD=...
 ```
 
-## UpApi SQL Log
+## UpTextApi SQL Log
 
-The compose stack enables SqlLog through these UpApi settings:
+The compose stack enables SqlLog through these UpTextApi settings:
 
 ```env
 UPAPI_SQLLOG_SCHEMA=dbo
@@ -105,19 +105,19 @@ Open the log UI at [http://localhost:8880/sql-log-view](http://localhost:8880/sq
 curl "http://localhost:8880/SqlLog?service=crmapi&maxHours=24&FromRow=0&ToRow=100"
 ```
 
-## Local UpApi Source Override
+## Local UpTextApi Source Override
 
-If you want the running `upapi` container to match your local source code instead of `docker.io/uptext/upapi:latest`, use the override file:
+If you want the running `uptextapi` container to match your local source code instead of `docker.io/uptext/uptextapi:latest`, use the override file:
 
 ```bash
-docker compose -f compose.yaml -f compose.local-upapi.yaml up --build -d
+docker compose -f compose.yaml -f compose.local-uptextapi.yaml up --build -d
 ```
 
-This builds `upapi` from your local repo at:
+This builds `uptextapi` from your local repo at:
 
-- `/Users/ole/UpText/Repos/UpApi/src`
+- `/Users/ole/UpText/Repos/UpTextApi/src`
 
-That is useful when you want behavior such as the homepage in [`Home.cs`](/Users/ole/UpText/Repos/UpApi/src/UpApi/Endpoints/Home.cs) to match exactly what the container is serving.
+That is useful when you want behavior such as the homepage in [`Home.cs`](/Users/ole/UpText/Repos/UpTextApi/src/UpTextApi/Endpoints/Home.cs) to match exactly what the container is serving.
 
 ## Use An Existing SQL Server
 
@@ -148,14 +148,14 @@ UPAPI_CORS_ALLOWED_ORIGIN_2=
 3. Start only the app services with the external-SQL override:
 
 ```bash
-docker compose -f compose.yaml -f compose.external-sql.yaml up --build -d db-init upapi upcrm
+docker compose -f compose.yaml -f compose.external-sql.yaml up --build -d db-init uptextapi uptextcrm
 ```
 
 This does three things:
 
 - `db-init` connects to the existing SQL Server and publishes the bundled `dacpac`
 - `db-init` creates or updates the dedicated `upservice` login, grants it `EXECUTE` on the `crmapi` schema, and grants metadata visibility on the `crm` table schema for SQL generation
-- `upapi` uses that `upservice` login instead of `sa`
+- `uptextapi` uses that `upservice` login instead of `sa`
 - `db-init` creates and grants access to the configured SQL log table
 
 Platform notes:
@@ -173,11 +173,11 @@ Requirements for the existing SQL Server:
 
 ## Notes
 
-- `UpCRM` is configured with `VITE_SQLWEBAPI_URL=http://localhost:8880`, not `http://upapi:8080`, because that setting runs in the browser.
+- `UpTextCRM` is configured with `VITE_SQLWEBAPI_URL=http://localhost:8880`, not `http://uptextapi:8080`, because that setting runs in the browser.
 - The published runtime images are currently used as `linux/amd64`. On ARM hosts, Docker will run them through emulation.
-- SQL Server still listens on `1433` inside the Docker network. If `1433` is busy on the host, set `SQL_PORT=1434` in `.env`; `db-init` and `upapi` will still use the internal `sqlserver:1433` address.
+- SQL Server still listens on `1433` inside the Docker network. If `1433` is busy on the host, set `SQL_PORT=1434` in `.env`; `db-init` and `uptextapi` will still use the internal `sqlserver:1433` address.
 - If `db-init` waits for SQL Server and then reports login failure for user `sa`, the existing `sqlserver-data` volume was probably created with a different `MSSQL_SA_PASSWORD`. Either restore the old password in `.env`, or rebuild the local database from scratch with `docker compose down -v` followed by `docker compose up --build -d`.
-- `upapi` connects with the dedicated SQL login from `UPAPI_SQL_USER` / `UPAPI_SQL_PASSWORD`. The bootstrap creates that login, grants it `EXECUTE` on the `crmapi` schema, and grants metadata visibility on the `crm` table schema for SQL generation.
+- `uptextapi` connects with the dedicated SQL login from `UPAPI_SQL_USER` / `UPAPI_SQL_PASSWORD`. The bootstrap creates that login, grants it `EXECUTE` on the `crmapi` schema, and grants metadata visibility on the `crm` table schema for SQL generation.
 - SQL data is persisted in the named Docker volume `sqlserver-data`.
 - If `1433`, `8880`, or `8080` is already in use on the host, change `SQL_PORT`, `UPAPI_PORT`, or `UPCRM_PORT` in `.env`.
 - To rebuild the database from scratch, run:
@@ -186,3 +186,64 @@ Requirements for the existing SQL Server:
 docker compose down -v
 docker compose up --build -d
 ```
+
+## Password storage upgrade
+
+The initializer now generates salted Argon2id hashes using the same profile as
+UpTextApi (v19, 19456 KiB memory, 2 iterations, parallelism 1). The bundled DACPAC includes `crm.sales.PasswordHash` as `nvarchar(256)` and
+the updated tenant creation, sales creation, password change, and login procedures.
+The initializer also reapplies the compatibility migration after publishing. Login
+returns the hash only through an output parameter for verification by the API.
+
+Deploy with an UpTextApi image containing the Argon2id password changes and
+`UpTextApi.dll`, or use `compose.local-uptextapi.yaml` to build the sibling source.
+Update `UPAPI_IMAGE` in existing `.env` files to the compatible image tag.
+Stop the API before upgrading the database:
+
+```bash
+docker compose stop uptextapi
+docker compose -f compose.yaml -f compose.local-uptextapi.yaml up --build -d
+```
+
+All three seeded admin passwords remain as documented above and are rehashed
+on initialization. Other existing SHA-256 hashes are preserved but cannot log
+in with the new API; reset those passwords through a trusted administrator flow.
+The old API is incompatible with the new login procedure. The SQL migration is
+reapplied after each DACPAC publish to enforce the API login contract.
+
+The bundled DACPAC was refreshed from UpTextCrm commit
+`e1e3f9856be3f7a4a4620b5f7e8bcb7ff110b7a4` (`auth changes`).
+The supported Argon2id profile produces 97-character hashes.
+Keep `db/init-image/PasswordHasher/UpHasher.cs` in sync with UpTextApi's
+`Services/UpHasher.cs` when changing the password profile.
+
+To check db-init hashes against the current sibling UpTextApi source, run:
+
+```bash
+dotnet build db/init-image/PasswordHasher/UpCrm.PasswordHasher.csproj
+dotnet run --project db/tests/PasswordCompatibility -- db/init-image/PasswordHasher/bin/Debug/net8.0/UpCrm.PasswordHasher.dll
+```
+
+The check covers seeded passwords, Unicode and special characters, random salts,
+wrong-password rejection, and empty input. Override `ApiHasherSource` with an
+MSBuild property if the API repository is elsewhere.
+
+## Application name migration
+
+The Compose services are now `uptextapi` and `uptextcrm`, using the images
+`docker.io/uptext/uptextapi:latest` and `docker.io/uptext/uptextcrm:latest`.
+The local overrides are `compose.local-uptextapi.yaml` and
+`compose.local-uptextcrm.yaml`. Update any scripts that use the old service or
+override names.
+
+Existing `UPAPI_*` and `UPCRM_*` environment variable names, SQL secret names,
+the `UpCrm` database name, and JWT issuer/audience values are retained for
+compatibility. In existing `.env` files, update `UPAPI_IMAGE` and `UPCRM_IMAGE`
+if they still point at the old image repositories. Recreate the stack and
+remove the old service containers with:
+
+```bash
+docker compose up -d --remove-orphans
+```
+
+Include your usual override files with `-f` when running this command.

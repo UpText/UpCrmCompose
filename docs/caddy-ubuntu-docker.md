@@ -2,8 +2,8 @@
 
 This guide keeps Caddy outside the `UpCrmCompose` Docker Compose project. The app stack continues to expose:
 
-- UpCRM on host port `8080`
-- UpApi on host port `8880`
+- UpTextCRM on host port `8080`
+- UpTextApi on host port `8880`
 
 Caddy runs as a separate Docker container and reverse proxies public traffic to those host ports.
 

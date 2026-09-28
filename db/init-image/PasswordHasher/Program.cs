@@ -1,9 +1,10 @@
-using System.Security.Cryptography;
-using System.Text;
+using UpTextApi.Services;
 
 var password = Console.In.ReadToEnd();
-
-using var sha = SHA256.Create();
-var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(password));
-
-Console.Write(Convert.ToBase64String(hash));
+if (string.IsNullOrWhiteSpace(password))
+{
+    Console.Error.WriteLine("Password must not be empty or whitespace.");
+    return 1;
+}
+Console.Write(UpHasher.HashPassword(password));
+return 0;

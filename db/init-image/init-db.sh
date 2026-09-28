@@ -127,31 +127,35 @@ seed_sql_log() {
     -i /app/seed-sql-log.sql
 }
 
-fix_tenants_post_password_hash() {
-  echo "Ensuring tenant-created admin passwords use the login hash format..."
+migrate_passwords_argon2id() {
+  echo "Applying Argon2id password storage and API verification contract..."
 
   sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
     -d "${SQL_DATABASE}" \
-    -i /app/fix-tenants-post-password-hash.sql
+    -i /app/migrate-passwords-argon2id.sql
 }
 
 seed_admin_users() {
   local admin_tenant_password_hash
+  local default_password_hash
+  default_password_hash="$(printf %s default123+ | dotnet /app/password-hasher/UpCrm.PasswordHasher.dll)"
   local admin_tenant_password_hash_escaped
   admin_tenant_password_hash="$(printf '%s' "${ADMIN_TENANT_PASSWORD}" | dotnet /app/password-hasher/UpCrm.PasswordHasher.dll)"
   admin_tenant_password_hash_escaped="${admin_tenant_password_hash//\'/\'\'}"
 
   echo "Seeding tenant admin users..."
 
+  # sqlcmd -v strips '=' characters from values; Argon2id profiles contain them.
+  ADMIN_TENANT_PASSWORD_HASH="${admin_tenant_password_hash_escaped}" \
+  DEFAULT_PASSWORD_HASH="${default_password_hash}" \
   sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
     -P "${SQL_ADMIN_PASSWORD}" \
     -d "${SQL_DATABASE}" \
-    -v ADMIN_TENANT_PASSWORD_HASH="${admin_tenant_password_hash_escaped}" \
     -i /app/seed-admin-users.sql
 }
 
@@ -167,8 +171,11 @@ seed_tenant_settings() {
 }
 
 seed_demo_tenant() {
+  local demo_password_hash
+  demo_password_hash="$(printf %s demo123+ | dotnet /app/password-hasher/UpCrm.PasswordHasher.dll)"
   echo "Seeding demo tenant data..."
 
+  DEMO_PASSWORD_HASH="${demo_password_hash}" \
   sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
     -U "${SQL_ADMIN_USER}" \
@@ -204,7 +211,7 @@ create_database_if_missing
 publish_dacpac
 seed_service_login
 seed_sql_log
-fix_tenants_post_password_hash
+migrate_passwords_argon2id
 seed_admin_users
 seed_demo_tenant
 seed_tenant_settings

@@ -1,21 +1,23 @@
 SET QUOTED_IDENTIFIER ON;
 SET NOCOUNT ON;
 
-DECLARE @AdminTenantPasswordHash NVARCHAR(100) = N'$(ADMIN_TENANT_PASSWORD_HASH)';
+DECLARE @DefaultPasswordHash NVARCHAR(256) = N'$(DEFAULT_PASSWORD_HASH)';
+
+IF @DefaultPasswordHash IS NULL OR @DefaultPasswordHash NOT LIKE N'$argon2id$v=19$m=19456,t=2,p=1$%'
+BEGIN
+    THROW 50000, 'DEFAULT_PASSWORD_HASH must use the API Argon2id profile.', 1;
+END;
+
+DECLARE @AdminTenantPasswordHash NVARCHAR(256) = N'$(ADMIN_TENANT_PASSWORD_HASH)';
 
 IF @AdminTenantPasswordHash IS NULL OR LTRIM(RTRIM(@AdminTenantPasswordHash)) = N''
 BEGIN
     THROW 50000, 'ADMIN_TENANT_PASSWORD_HASH is required.', 1;
 END;
 
-IF LEN(@AdminTenantPasswordHash) = 43
+IF @AdminTenantPasswordHash NOT LIKE N'$argon2id$v=19$m=19456,t=2,p=1$%'
 BEGIN
-    SET @AdminTenantPasswordHash = @AdminTenantPasswordHash + N'=';
-END;
-
-IF LEN(@AdminTenantPasswordHash) <> 44
-BEGIN
-    THROW 50000, 'ADMIN_TENANT_PASSWORD_HASH must be a SHA-256 base64 hash.', 1;
+    THROW 50000, 'ADMIN_TENANT_PASSWORD_HASH must use the API Argon2id profile.', 1;
 END;
 
 DECLARE @Tenants TABLE
@@ -93,7 +95,7 @@ DECLARE @Users TABLE
     last_name NVARCHAR(100) NOT NULL,
     administrator BIT NOT NULL,
     disabled BIT NOT NULL,
-    password_hash NVARCHAR(100) NOT NULL
+    password_hash NVARCHAR(256) NOT NULL
 );
 
 INSERT INTO @Users
@@ -116,7 +118,7 @@ VALUES
     N'User',
     1,
     0,
-    N'v2iQGkLtfSoCeLUyzrkzK9dE6TBQrOHS9KUlcZ0Fe7E='
+    @DefaultPasswordHash
 ),
 (
     N'admin',

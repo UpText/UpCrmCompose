@@ -4,6 +4,7 @@ WORKDIR /src
 
 COPY init-image/PasswordHasher/UpCrm.PasswordHasher.csproj ./PasswordHasher/
 COPY init-image/PasswordHasher/Program.cs ./PasswordHasher/
+COPY init-image/PasswordHasher/UpHasher.cs ./PasswordHasher/
 COPY init-image/PasswordHasher/NuGet.config ./PasswordHasher/
 
 RUN dotnet publish ./PasswordHasher/UpCrm.PasswordHasher.csproj \
@@ -34,7 +35,7 @@ WORKDIR /app
 COPY init-image/init-db.sh /usr/local/bin/init-db.sh
 COPY init-image/seed-service-login.sql /app/seed-service-login.sql
 COPY init-image/seed-sql-log.sql /app/seed-sql-log.sql
-COPY init-image/fix-tenants-post-password-hash.sql /app/fix-tenants-post-password-hash.sql
+COPY init-image/migrate-passwords-argon2id.sql /app/migrate-passwords-argon2id.sql
 COPY init-image/seed-admin-users.sql /app/seed-admin-users.sql
 COPY init-image/seed-demo-tenant.sql /app/seed-demo-tenant.sql
 COPY init-image/seed-demo-objects.sql /app/seed-demo-objects.sql

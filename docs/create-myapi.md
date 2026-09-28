@@ -1,8 +1,8 @@
-# Create a New UpApi Service Named `myapi`
+# Create a New UpTextApi Service Named `myapi`
 
-This guide describes the steps needed to expose a second SQL-backed API service named `myapi` through UpApi.
+This guide describes the steps needed to expose a second SQL-backed API service named `myapi` through UpTextApi.
 
-UpApi routes requests by service name:
+UpTextApi routes requests by service name:
 
 ```text
 /{service}/{resource}
@@ -117,15 +117,15 @@ GO
 
 Parameters named `@auth_*` are filled from JWT claims and mark the endpoint as protected in generated OpenAPI.
 
-## 4. Add UpApi settings
+## 4. Add UpTextApi settings
 
-UpApi binds services from the `Services` configuration section. Add a `myapi` service entry with:
+UpTextApi binds services from the `Services` configuration section. Add a `myapi` service entry with:
 
 - `SqlSchema`: the schema containing the stored procedures, here `myapi`
 - `TableSchema`: the schema used by SQL generator metadata, here `mydata` if you created the new table schema above, or `crm` if `myapi` reads existing CRM tables
 - `SqlConnectionString`: the SQL connection string for `upservice`
 
-In [`compose.yaml`](/Users/ole/UpText/Repos/UpCrmCompose/compose.yaml), add these environment variables under the `upapi` service:
+In [`compose.yaml`](/Users/ole/UpText/Repos/UpCrmCompose/compose.yaml), add these environment variables under the `uptextapi` service:
 
 ```yaml
 SQLWEBAPI__SWAGGER: ${UPCRM_SERVICE:-crmapi},myapi
@@ -134,7 +134,7 @@ Services__myapi__TableSchema: ${MYAPI_TABLE_SCHEMA:-mydata}
 Services__myapi__SqlConnectionString: Server=sqlserver,1433;Initial Catalog=${MSSQL_DB:-UpCrm};User ID=${UPAPI_SQL_USER:-upservice};Password={{secret:upapi_sql_password}};Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;
 ```
 
-If you use [`compose.external-sql.yaml`](/Users/ole/UpText/Repos/UpCrmCompose/compose.external-sql.yaml), add this under its `upapi.environment` block too:
+If you use [`compose.external-sql.yaml`](/Users/ole/UpText/Repos/UpCrmCompose/compose.external-sql.yaml), add this under its `uptextapi.environment` block too:
 
 ```yaml
 Services__myapi__SqlConnectionString: Server=${EXTERNAL_SQL_SERVER:?Set EXTERNAL_SQL_SERVER in .env},${EXTERNAL_SQL_PORT:-1433};Initial Catalog=${MSSQL_DB:-UpCrm};User ID=${UPAPI_SQL_USER:-upservice};Password={{secret:upapi_sql_password}};Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;
@@ -146,9 +146,9 @@ Add the optional table-schema setting to [`.env.example`](/Users/ole/UpText/Repo
 MYAPI_TABLE_SCHEMA=mydata
 ```
 
-Important: `.env` values only provide variable values to Compose. They do not become UpApi configuration unless [`compose.yaml`](/Users/ole/UpText/Repos/UpCrmCompose/compose.yaml) references them in the `upapi.environment` block. If you only add `MYAPI_TABLE_SCHEMA=mydata` to `.env`, UpApi still returns `{"message":"Unknown service"}` because no `Services__myapi__...` configuration exists inside the container.
+Important: `.env` values only provide variable values to Compose. They do not become UpTextApi configuration unless [`compose.yaml`](/Users/ole/UpText/Repos/UpCrmCompose/compose.yaml) references them in the `uptextapi.environment` block. If you only add `MYAPI_TABLE_SCHEMA=mydata` to `.env`, UpTextApi still returns `{"message":"Unknown service"}` because no `Services__myapi__...` configuration exists inside the container.
 
-For a non-Compose UpApi install, the equivalent `appsettings.json` shape is:
+For a non-Compose UpTextApi install, the equivalent `appsettings.json` shape is:
 
 ```json
 {
@@ -181,10 +181,10 @@ Services__myapi__TableSchema: mydata
 Services__myapi__SqlConnectionString: Server=sqlserver,1433;...
 ```
 
-Recreate UpApi after changing configuration:
+Recreate UpTextApi after changing configuration:
 
 ```bash
-docker compose up -d --force-recreate upapi
+docker compose up -d --force-recreate uptextapi
 ```
 
 Validate the endpoint:
@@ -214,22 +214,22 @@ http://localhost:8880/swa/myapi/swagger.json
 
 ## Troubleshooting `Unknown service`
 
-This response comes from UpApi before it tries to execute SQL:
+This response comes from UpTextApi before it tries to execute SQL:
 
 ```json
 {"message":"Unknown service"}
 ```
 
-It means the running UpApi container does not have a service entry named `myapi`. Check the live container environment on the Ubuntu server:
+It means the running UpTextApi container does not have a service entry named `myapi`. Check the live container environment on the Ubuntu server:
 
 ```bash
-docker compose exec upapi printenv | grep 'Services__myapi'
+docker compose exec uptextapi printenv | grep 'Services__myapi'
 ```
 
 If nothing prints, update [`compose.yaml`](/Users/ole/UpText/Repos/UpCrmCompose/compose.yaml), not just `.env`, then recreate the container:
 
 ```bash
-docker compose up -d --force-recreate upapi
+docker compose up -d --force-recreate uptextapi
 ```
 
 If the service is configured but the procedure or SQL permissions are missing, the response will change from `Unknown service` to a database error.

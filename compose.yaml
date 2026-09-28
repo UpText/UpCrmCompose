@@ -2,7 +2,7 @@ services:
   sqlserver:
     image: ${SQL_SERVER_IMAGE:-mcr.microsoft.com/mssql/server:2022-latest}
     platform: ${RUNTIME_PLATFORM:-linux/amd64}
-    container_name: upcrm-sqlserver
+    # container_name: uptextcrm-sqlserver
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
@@ -34,7 +34,7 @@ services:
       context: ./db
       dockerfile: init-image/Dockerfile
     platform: ${RUNTIME_PLATFORM:-linux/amd64}
-    container_name: upcrm-db-init
+    # container_name: uptextcrm-db-init
     restart: "no"
     depends_on:
       sqlserver:
@@ -66,10 +66,10 @@ services:
         target: upapi_sql_password
         mode: 0444
 
-  upapi:
-    image: ${UPAPI_IMAGE:-docker.io/uptext/upapi:latest}
+  uptextapi:
+    image: ${UPAPI_IMAGE:-docker.io/uptext/uptextapi:latest}
     platform: ${RUNTIME_PLATFORM:-linux/amd64}
-    container_name: upcrm-upapi
+    # container_name: uptextcrm-uptextapi
     restart: unless-stopped
     depends_on:
       db-init:
@@ -80,7 +80,7 @@ services:
       - /bin/sh
       - -c
     command:
-      - JWT_SECRET="$$(cat /run/secrets/jwt_secret)" && export JWT_SECRET && exec dotnet UpApi.dll
+      - JWT_SECRET="$$(cat /run/secrets/jwt_secret)" && export JWT_SECRET && exec dotnet UpTextApi.dll
     environment:
       ASPNETCORE_URLS: http://+:8080
       ASPNETCORE_ENVIRONMENT: Production
@@ -106,13 +106,13 @@ services:
         target: upapi_sql_password
         mode: 0444
 
-  upcrm:
-    image: ${UPCRM_IMAGE:-docker.io/uptext/upcrm:latest}
+  uptextcrm:
+    image: ${UPCRM_IMAGE:-docker.io/uptext/uptextcrm:latest}
     platform: ${RUNTIME_PLATFORM:-linux/amd64}
-    container_name: upcrm-ui
+    # container_name: uptextcrm-ui
     restart: unless-stopped
     depends_on:
-      upapi:
+      uptextapi:
         condition: service_started
     ports:
       - "${UPCRM_PORT:-8080}:80"

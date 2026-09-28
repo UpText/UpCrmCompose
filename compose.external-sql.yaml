@@ -11,7 +11,7 @@ services:
         target: external_sql_admin_password
         mode: 0444
 
-  upapi:
+  uptextapi:
     environment:
       Services__crmapi__SqlConnectionString: Server=${EXTERNAL_SQL_SERVER:?Set EXTERNAL_SQL_SERVER in .env},${EXTERNAL_SQL_PORT:-1433};Initial Catalog=${MSSQL_DB:-UpCrm};User ID=${UPAPI_SQL_USER:-upservice};Password={{secret:upapi_sql_password}};Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;
       SqlLog__ConnectionString: Server=${EXTERNAL_SQL_SERVER:?Set EXTERNAL_SQL_SERVER in .env},${EXTERNAL_SQL_PORT:-1433};Initial Catalog=${MSSQL_DB:-UpCrm};User ID=${UPAPI_SQL_USER:-upservice};Password={{secret:upapi_sql_password}};Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;
