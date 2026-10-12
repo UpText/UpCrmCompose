@@ -1,6 +1,6 @@
 services:
   db-init:
-    depends_on: {}
+    depends_on: !reset {}
     environment:
       SQL_SERVER: ${EXTERNAL_SQL_SERVER:?Set EXTERNAL_SQL_SERVER in .env}
       SQL_PORT: ${EXTERNAL_SQL_PORT:-1433}
