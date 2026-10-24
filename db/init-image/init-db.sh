@@ -184,6 +184,17 @@ seed_demo_tenant() {
     -i /app/seed-demo-tenant.sql
 }
 
+seed_demo_configuration() {
+  echo "Seeding demo tenant configuration..."
+
+  sqlcmd -b -C \
+    -S "${SQL_SERVER},${SQL_PORT}" \
+    -U "${SQL_ADMIN_USER}" \
+    -P "${SQL_ADMIN_PASSWORD}" \
+    -d "${SQL_DATABASE}" \
+    -i /app/seed-demo-configuration.sql
+}
+
 seed_demo_objects() {
   echo "Seeding demo tenant objects..."
 
@@ -215,6 +226,7 @@ migrate_passwords_argon2id
 seed_admin_users
 seed_demo_tenant
 seed_tenant_settings
+seed_demo_configuration
 seed_demo_objects
 seed_demo_notes
 

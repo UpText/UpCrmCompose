@@ -53,6 +53,28 @@ If you change `UPAPI_PORT` or `UPCRM_PORT`, the default browser-facing URLs now 
 
 UpTextApi CORS origins are configured from `.env` with `UPAPI_CORS_ALLOWED_ORIGIN_0`, `UPAPI_CORS_ALLOWED_ORIGIN_1`, and `UPAPI_CORS_ALLOWED_ORIGIN_2`. For hosted installs, set origin 0 to the public UpTextCRM URL and leave unused origins blank.
 
+## Reset the demo tenant on Ubuntu
+
+From this repository, with Docker Compose installed and SQL Server running:
+
+```bash
+bash ./reset-demo-tenant.sh
+```
+
+This permanently replaces all `demo` data with the bundled demo seed. It first
+sets `crm.tenants.active = 0` for `demo`, then calls
+`crmapi.tenants_delete @id = 'demo', @auth_tenant = N'admin'` and reinstalls the
+demo records, configuration, attachments, and welcome note in one transaction.
+SQL errors roll back the reset. The script refuses seed ID conflicts with other
+tenants. Login afterward with tenant `demo`, `demo@local.com` / `demo123+`.
+
+The script uses the `db-init` service and your `.env`; Ubuntu needs no local SQL
+or .NET tools. Include your usual Compose options for external SQL:
+
+```bash
+bash ./reset-demo-tenant.sh -f compose.yaml -f compose.external-sql.yaml
+```
+
 ## Workstation Install
 
 For a workstation install, keep these values in `.env` so the user starts the app at [http://localhost:8080](http://localhost:8080):

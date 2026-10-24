@@ -41,6 +41,7 @@ COPY init-image/seed-demo-tenant.sql /app/seed-demo-tenant.sql
 COPY init-image/seed-demo-objects.sql /app/seed-demo-objects.sql
 COPY init-image/seed-demo-notes.sql /app/seed-demo-notes.sql
 COPY init-image/seed-tenant-settings.sql /app/seed-tenant-settings.sql
+COPY init-image/seed-demo-configuration.sql /app/seed-demo-configuration.sql
 COPY DbProjAtomicCrm.dacpac /app/DbProjAtomicCrm.dacpac
 COPY --from=password-hasher-build /out /app/password-hasher
 

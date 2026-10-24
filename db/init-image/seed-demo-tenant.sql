@@ -120,6 +120,7 @@ SET IDENTITY_INSERT crm.sales ON;
 MERGE crm.sales AS target
 USING SourceRows AS source
     ON target.id = source.id
+-- Preserve existing passwords; seed credentials only when inserting new users.
 WHEN MATCHED THEN
     UPDATE SET
         tenant = source.tenant,
@@ -134,8 +135,7 @@ WHEN MATCHED THEN
         avatar_path = source.avatar_path,
         avatar_type = source.avatar_type,
         created_at = source.created_at,
-        updated_at = source.updated_at,
-        PasswordHash = source.PasswordHash
+        updated_at = source.updated_at
 WHEN NOT MATCHED BY TARGET THEN
     INSERT
     (
