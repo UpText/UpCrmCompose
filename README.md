@@ -50,7 +50,7 @@ The `demo` tenant also gets an initial contact note so it opens on the dashboard
 The stack also enables UpTextApi's SQL log feature. By default, `db-init` creates `dbo.log`, grants the `upservice` login `SELECT`, `INSERT`, and `DELETE` on that table, and UpTextApi writes log entries there.
 
 If you change `UPAPI_PORT` or `UPCRM_PORT`, the default browser-facing URLs now follow those ports automatically. You only need to set `UPAPI_PUBLIC_URL` or `UPCRM_PUBLIC_URL` yourself if you want a different hostname than `localhost`.
-
+ 
 UpTextApi CORS origins are configured from `.env` with `UPAPI_CORS_ALLOWED_ORIGIN_0`, `UPAPI_CORS_ALLOWED_ORIGIN_1`, and `UPAPI_CORS_ALLOWED_ORIGIN_2`. For hosted installs, set origin 0 to the public UpTextCRM URL and leave unused origins blank.
 
 ## Reset the demo tenant on Ubuntu
