@@ -104,7 +104,7 @@ publish_dacpac() {
 }
 
 seed_service_login() {
-  echo "Ensuring SQL service login [${SERVICE_SQL_USER}] exists with EXECUTE on [crmapi] and metadata visibility on [crm]..."
+  echo "Ensuring SQL service login [${SERVICE_SQL_USER}] exists with EXECUTE on [crmapi] and [crmauth] and metadata visibility on [crm]..."
 
   sqlcmd -b -C \
     -S "${SQL_SERVER},${SQL_PORT}" \
