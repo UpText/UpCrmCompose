@@ -75,7 +75,8 @@ DELETE FROM crm.tasks WHERE tenant = N'demo';
 DELETE FROM crm.contact_notes WHERE tenant = N'demo';
 DELETE FROM crm.contacts WHERE tenant = N'demo';
 DELETE FROM crm.companies WHERE tenant = N'demo';
-DELETE FROM crm.sales WHERE tenant = N'demo';
+-- Keep sales rows: external identities reference them, and the MERGE below
+-- refreshes seed users in place while preserving their existing passwords.
 
 SET IDENTITY_INSERT crm.sales ON;
 
